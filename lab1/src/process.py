@@ -8,7 +8,7 @@ import numpy as np
 
 func = lambda x: np.log2(x) + np.cos(np.pi * x / 2)
 
-N = 2000
+N = 10000
 
 data_process = DataProcess(func, N)
 data_process.process()
