@@ -24,7 +24,7 @@ parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
 parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                     help='SGD momentum (default: 0.9)')
 parser.add_argument('--weight_decay', type=float, default=5e-3, metavar='W',
-                    help='SGD weight decay (default: 1e-4)')
+                    help='SGD weight decay (default: 5e-3)')
 parser.add_argument('--step_size', type=int, default=5, metavar='S',
                     help='step size for lr decay (default: 5)')
 parser.add_argument('--gamma', type=float, default=0.1, metavar='G',
