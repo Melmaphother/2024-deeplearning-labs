@@ -15,8 +15,13 @@ class Trainer:
         self.model.to(self.device)
 
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.SGD(self.model.parameters(), lr=args.lr, momentum=args.momentum)
-        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=args.step_size, gamma=args.gamma)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=args.lr, momentum=args.momentum,
+                                   weight_decay=args.weight_decay)  # weight_decay: L2正则
+        self.scheduler = optim.lr_scheduler.MultiStepLR(optimizer=self.optimizer,
+                                                        milestones=[int(args.epochs * 0.4), int(args.epochs * 0.7)],
+                                                        gamma=args.gamma, last_epoch=-1)
+        self.best_acc = 0
+        self.best_epoch = 0
 
     def _train_single_epoch(self):
         self.model.train()
@@ -36,6 +41,7 @@ class Trainer:
 
         avg_train_loss = train_loss / len(self.train_loader)
         print(f'Train loss: {avg_train_loss: .4f}')
+        return avg_train_loss
 
     def _validate(self):
         self.model.eval()
@@ -60,25 +66,38 @@ class Trainer:
         accuracy = 100 * val_correct / val_total
         print(f'Validation loss: {avg_val_loss: .4f}, accuracy: {accuracy: .2f}%')
 
-        return avg_val_loss
+        return avg_val_loss, accuracy
 
     def train(self):
+        all_train_loss = []
         all_val_loss = []
+        all_val_acc = []
+        with open(self.args.save_path + '/val_info.txt', 'w'):
+            pass
+
         for epoch in range(self.args.epochs):
             print(f'Epoch {epoch + 1}/{self.args.epochs}')
-            self._train_single_epoch()
+            train_loss = self._train_single_epoch()
+            all_train_loss.append(train_loss)
 
             if (epoch + 1) % self.args.val_interval == 0:
-                val_loss = self._validate()
+                val_loss, accuracy = self._validate()
                 all_val_loss.append(val_loss)
-                with open(self.args.save_path + '/val_loss.txt', 'a') as f:
-                    f.write(f'epoch: {epoch + 1}, val_loss: {val_loss: .4f}\n')
+                all_val_acc.append(accuracy)
+
+                if self.best_acc < accuracy:
+                    self.best_acc = accuracy
+                    self.best_epoch = epoch
+
+                with open(self.args.save_path + '/val_info.txt', 'a') as f:
+                    f.write(f'epoch: {epoch + 1}, val_loss: {val_loss: .4f}, val_acc: {accuracy: .2f}%\n')
 
             self.scheduler.step()
+            print('last_lr:', self.scheduler.get_last_lr())
 
+        print(f'Best val acc: {self.best_acc: .2f}%, epoch: {self.best_epoch + 1}')
         torch.save(self.model.state_dict(), self.args.save_path + '/model.pkl')
-
-        return all_val_loss
+        return all_train_loss, all_val_loss, all_val_acc
 
 
 class Tester:

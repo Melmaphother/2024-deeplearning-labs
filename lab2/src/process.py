@@ -1,8 +1,8 @@
-from datautils import CIFAR10Data, plot_loss
+import torch
+from datautils import CIFAR10Data, plot_train_loss, plot_val_data
 from model import CIFAR10CNN
 from args import args
 from train import Trainer, Tester
-import torch
 
 
 def main():
@@ -12,8 +12,10 @@ def main():
     model = CIFAR10CNN()
 
     trainer = Trainer(args, model, train_loader, val_loader)
-    all_val_loss = trainer.train()
-    plot_loss(args, all_val_loss)
+    all_train_loss, all_val_loss, all_val_acc = trainer.train()
+    plot_train_loss(args, all_train_loss)
+    plot_val_data(args, all_val_loss, 'Loss')
+    plot_val_data(args, all_val_acc, 'Acc')
 
     # model = torch.load(args.save_path + './model.pkl')
     # tester = Tester(args, model, test_loader)

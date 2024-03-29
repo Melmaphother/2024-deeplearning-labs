@@ -1,29 +1,76 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
+
+class FeatureCNN(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, dropout=0.4, enable_res=True):
+        super(FeatureCNN, self).__init__()
+        self.enable_res = enable_res
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding, bias=False),
+            nn.BatchNorm2d(out_channels)
+        )
+
+        if stride != 1 or in_channels != out_channels:
+            self.res = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
+                nn.BatchNorm2d(out_channels)
+            )
+        else:
+            # 此时输入和输出的尺寸是匹配的，因此可以直接进行相加操作
+            self.res = nn.Sequential()
+
+        self.relu = nn.Sequential(
+            nn.ReLU(inplace=True)
+        )
+
+        self.pool = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout2d(dropout)
+        )
+
+    def forward(self, x):
+        out = self.conv(x)
+        # 残差连接
+        if self.enable_res:
+            out += self.res(x)
+        out = self.relu(out)
+        out = self.pool(out)
+        return out
+
+
+class Classifier(nn.Module):
+    def __init__(self, in_features, num_classes=10):
+        super(Classifier, self).__init__()
+        # 全连接层中一般不使用 BatchNorm，因为BatchNorm会对每个特征进行归一化，可能会去除一些特征之间的关系
+        self.classifier = nn.Sequential(
+            nn.Linear(in_features, num_classes)
+        )
+
+    def forward(self, x):
+        x = self.classifier(x)
+        return x
 
 
 class CIFAR10CNN(nn.Module):
     def __init__(self):
         super(CIFAR10CNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, 5)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.dropout1 = nn.Dropout(0.25)
-        self.conv2 = nn.Conv2d(64, 128, 5)
-        self.bn2 = nn.BatchNorm2d(128)
-        self.dropout2 = nn.Dropout(0.25)
-        self.fc1 = nn.Linear(128 * 5 * 5, 1024)
-        self.fc2 = nn.Linear(1024, 128)
-        self.fc3 = nn.Linear(128, 10)
+        self.features = nn.Sequential(
+            FeatureCNN(3, 64),
+            FeatureCNN(64, 128),
+            FeatureCNN(128, 256),
+            FeatureCNN(256, 512)
+        )
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))  # 将最终结果转成 1x1 的矩阵
+        self.classifier = Classifier(512, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.bn1(self.conv1(x))))
-        x = self.dropout1(x)
-        x = self.pool(F.relu(self.bn2(self.conv2(x))))
-        x = self.dropout2(x)
-        x = x.view(-1, 128 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.features(x)
+        x = self.avg_pool(x)
+        x = torch.flatten(x, 1)  # 将 x 从第一维开始展开
+        x = self.classifier(x)
         return x

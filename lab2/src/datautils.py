@@ -10,10 +10,24 @@ class CIFAR10Data:
         self.train_batch_size = args.train_batch_size
         self.test_batch_size = args.test_batch_size
         self.val_batch_size = args.val_batch_size
+
+        # Imagenet数据集的均值和标准差（预训练权重）
+        norm_mean = [0.485, 0.456, 0.406]
+        norm_std = [0.229, 0.224, 0.225]
+        transform_train = transforms.Compose([transforms.ToTensor(),  # 转为Tensor
+                                              transforms.Normalize(norm_mean, norm_std),  # 归一化到[-1,1]
+                                              transforms.RandomHorizontalFlip(),  # 随机水平镜像
+                                              transforms.RandomErasing(scale=(0.04, 0.2), ratio=(0.5, 2)),  # 随机遮挡
+                                              transforms.RandomCrop(32, padding=4)  # 随机中心裁剪
+                                              ])
+
+        transform_test = transforms.Compose([transforms.ToTensor(),
+                                             transforms.Normalize(norm_mean, norm_std)])
+
         self.train_data = datasets.CIFAR10(root=args.root_path, train=True, download=True,
-                                           transform=transforms.ToTensor())
+                                           transform=transform_train)
         self.test_data = datasets.CIFAR10(root=args.root_path, train=False, download=True,
-                                          transform=transforms.ToTensor())
+                                          transform=transform_test)
 
         # 划分训练集和验证集
         self.train_dataset, self.val_dataset = self._split_train_val(self.train_data, train_ratio=0.8)
@@ -31,23 +45,29 @@ class CIFAR10Data:
         return train_loader, val_loader, test_loader
 
 
-def plot_loss(args, all_loss):
-    """
-    绘制训练过程中的损失变化图。
-
-    Parameters:
-    - args: 包含训练参数的对象，应该有epochs和val_interval属性。
-    - all_loss: 包含每次验证损失的列表。
-    """
-    # 根据验证间隔和总的epochs数计算x轴的坐标点
+def plot_val_data(args, data, description='Loss'):
     epochs = np.arange(args.val_interval, args.epochs + 1, args.val_interval)
-    all_loss = np.array(all_loss)
+    data = np.array(data)
 
     plt.figure(figsize=(8, 6))
-    plt.plot(epochs, all_loss, label='Validation Loss')
-    plt.title('Validation Loss')
+    plt.plot(epochs, data, label='Validation ' + description)
+    plt.title('Validation ' + description)
+    plt.xlabel('Epoch')
+    plt.ylabel(description)
+    plt.legend()
+    plt.savefig(args.save_path + '/validation_' + description.lower() + '.png')
+    plt.show()
+
+
+def plot_train_loss(args, data):
+    epochs = np.arange(1, args.epochs + 1)
+    data = np.array(data)
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(epochs, data, label='Training Loss')
+    plt.title('Training Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig(args.save_path + '/validation_loss.png')
+    plt.savefig(args.save_path + '/training_loss.png')
     plt.show()
