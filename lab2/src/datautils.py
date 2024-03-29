@@ -4,18 +4,15 @@ from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 class CIFAR10Data:
     def __init__(self, args):
-        self.root_dir = args.root_dir
         self.seed = args.seed
         self.train_batch_size = args.train_batch_size
         self.test_batch_size = args.test_batch_size
         self.val_batch_size = args.val_batch_size
-
-        self.train_data = datasets.CIFAR10(root=self.root_dir, train=True, download=False,
+        self.train_data = datasets.CIFAR10(root=args.root_path, train=True, download=True,
                                            transform=transforms.ToTensor())
-        self.test_data = datasets.CIFAR10(root=self.root_dir, train=False, download=False,
+        self.test_data = datasets.CIFAR10(root=args.root_path, train=False, download=True,
                                           transform=transforms.ToTensor())
 
         # 划分训练集和验证集
@@ -52,4 +49,5 @@ def plot_loss(args, all_loss):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
+    plt.savefig(args.save_path + '/validation_loss.png')
     plt.show()
