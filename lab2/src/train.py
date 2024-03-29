@@ -96,6 +96,8 @@ class Trainer:
             print('last_lr:', self.scheduler.get_last_lr())
 
         print(f'Best val acc: {self.best_acc: .2f}%, epoch: {self.best_epoch + 1}')
+        with open(self.args.save_path + '/val_info.txt', 'a') as f:
+            f.write(f'Best val acc: {self.best_acc: .2f}%, epoch: {self.best_epoch + 1}\n')
         torch.save(self.model.state_dict(), self.args.save_path + '/model.pkl')
         return all_train_loss, all_val_loss, all_val_acc
 

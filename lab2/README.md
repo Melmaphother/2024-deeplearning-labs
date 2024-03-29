@@ -45,6 +45,10 @@ transform_test = transforms.Compose([transforms.ToTensor(),
 - 架构图
 TODO
 
+- 规模
+
+18.6MB
+
 - 使用残差连接网络
 避免梯度消失和梯度爆炸，提高网络深度
 
