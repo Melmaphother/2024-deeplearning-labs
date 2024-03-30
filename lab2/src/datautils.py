@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 class CIFAR10Data:
     def __init__(self, args):
         self.seed = args.seed

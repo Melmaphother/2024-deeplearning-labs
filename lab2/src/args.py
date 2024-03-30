@@ -37,7 +37,7 @@ parser.add_argument('--no_cuda', action='store_true', default=False,
 # data path args
 parser.add_argument('--root_path', type=str, default='../data/', metavar='R',
                     help='path of CIFAR-10 dataset')
-parser.add_argument('--save_path', type=str, default='../result/2/', metavar='S',
+parser.add_argument('--save_path', type=str, default='../result/1/', metavar='S',
                     help='path to save the result')
 
 args = parser.parse_args()
