@@ -3,6 +3,7 @@ import torch.nn as nn
 
 
 class FeatureCNN(nn.Module):
+    # 用于特征提取
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, dropout=0.4, enable_res=True):
         super(FeatureCNN, self).__init__()
         self.enable_res = enable_res
@@ -38,12 +39,14 @@ class FeatureCNN(nn.Module):
         # 残差连接
         if self.enable_res:
             out += self.res(x)
+        # 因为 self.conv 中第二层卷积层之后可能需要与残差连接，所以这一卷积层的 relu 放在连接之后
         out = self.relu(out)
         out = self.pool(out)
         return out
 
 
 class Classifier(nn.Module):
+    # 用于分类
     def __init__(self, in_features, num_classes=10):
         super(Classifier, self).__init__()
         # 全连接层中一般不使用 BatchNorm，因为BatchNorm会对每个特征进行归一化，可能会去除一些特征之间的关系
@@ -71,6 +74,6 @@ class CIFAR10CNN(nn.Module):
     def forward(self, x):
         x = self.features(x)
         x = self.avg_pool(x)
-        x = torch.flatten(x, 1)  # 将 x 从第一维开始展开
+        x = torch.flatten(x, 1)  # 将 x 从第一维开始展开，当然可以用 x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x

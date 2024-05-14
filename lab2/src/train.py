@@ -88,6 +88,8 @@ class Trainer:
                 if self.best_acc < accuracy:
                     self.best_acc = accuracy
                     self.best_epoch = epoch
+                    if self.best_epoch >= 0.9 * self.args.epochs:  # 避免前期频繁读写
+                        torch.save(self.model.state_dict(), self.args.save_path + '/best_model.pkl')
 
                 with open(self.args.save_path + '/val_info.txt', 'a') as f:
                     f.write(f'epoch: {epoch + 1}, val_loss: {val_loss: .4f}, val_acc: {accuracy: .2f}%\n')
@@ -96,6 +98,8 @@ class Trainer:
             print('last_lr:', self.scheduler.get_last_lr())
 
         print(f'Best val acc: {self.best_acc: .2f}%, epoch: {self.best_epoch + 1}')
+        with open(self.args.save_path + '/val_info.txt', 'a') as f:
+            f.write(f'Best val acc: {self.best_acc: .2f}%, epoch: {self.best_epoch + 1}\n')
         torch.save(self.model.state_dict(), self.args.save_path + '/model.pkl')
         return all_train_loss, all_val_loss, all_val_acc
 
@@ -133,3 +137,5 @@ class Tester:
         accuracy = 100 * test_correct / test_total
 
         print(f'Test loss: {test_loss: .4f}, accuracy: {accuracy: .2f}%')
+        with open(self.args.save_path + '/test_info.txt', 'w') as f:
+            f.write(f'Test loss: {test_loss: .4f}, accuracy: {accuracy: .2f}%')
