@@ -42,8 +42,8 @@ transform_test = transforms.Compose([transforms.ToTensor(),
 
 ## 模型
 
-- 架构图
-TODO
+- 架构
+ResNet18的架构
 
 - 使用残差连接网络
 避免梯度消失和梯度爆炸，提高网络深度
