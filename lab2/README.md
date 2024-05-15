@@ -42,8 +42,8 @@ transform_test = transforms.Compose([transforms.ToTensor(),
 
 ## 模型
 
-- 架构图
-TODO
+- 架构
+ResNet18的架构
 
 - 规模
 
