@@ -30,10 +30,10 @@ def main(dataset_name: str = 'Cora'):
                       data_loader.get_val_mask())
     trainer.train()
     # load model
-    model.load_state_dict(torch.load('model/best_model.pkl'))
+    model.load_state_dict(torch.load('../model/best_model.pkl'))
     tester = Tester(args, model, features, labels, adj_matrix, data_loader.get_test_mask())
     tester.test()
 
 
 if __name__ == '__main__':
-    main()
+    main('Cora')

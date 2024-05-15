@@ -1,6 +1,6 @@
 import torch
-from sklearn.metrics import accuracy_score
 import os
+from sklearn.metrics import accuracy_score
 
 
 class Trainer:
@@ -8,17 +8,19 @@ class Trainer:
         self.args = args
         self.device = args.device
         self.num_epochs = args.num_epochs
+        self.patience = args.patience
         self.model = model.to(self.device)
         self.features = features.to(self.device)
         self.labels = labels.to(self.device)
         self.adj_matrix = adj_matrix.to(self.device)
         self.train_mask = train_mask
         self.val_mask = val_mask
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         self.criterion = torch.nn.CrossEntropyLoss()
 
     def train(self):
         best_val_acc = 0
+        counter = 0
         for epoch in range(self.num_epochs):
             self.model.train()
             self.optimizer.zero_grad()
@@ -34,9 +36,16 @@ class Trainer:
             print(f'Epoch: {epoch + 1:03d}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}')
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
-                if not os.path.exists('model'):
-                    os.makedirs('model')
-                torch.save(self.model.state_dict(), 'model/best_model.pkl')
+                counter = 0
+                if not os.path.exists('../model'):
+                    os.makedirs('../model')
+                torch.save(self.model.state_dict(), '../model/best_model.pkl')
+            else:
+                counter = 1
+
+            if counter == self.patience:
+                print(f'Early stopping at epoch: {epoch + 1}')
+                break
 
     def val(self):
         self.model.eval()
