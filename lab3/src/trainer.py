@@ -4,14 +4,16 @@ import os
 
 
 class Trainer:
-    def __init__(self, args, model, train_loader, val_loader, adj_matrix):
+    def __init__(self, args, model, features, labels, adj_matrix, train_mask, val_mask):
         self.args = args
         self.device = args.device
         self.num_epochs = args.num_epochs
         self.model = model.to(self.device)
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.adj_matrix = adj_matrix
+        self.features = features.to(self.device)
+        self.labels = labels.to(self.device)
+        self.adj_matrix = adj_matrix.to(self.device)
+        self.train_mask = train_mask
+        self.val_mask = val_mask
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         self.criterion = torch.nn.CrossEntropyLoss()
 
@@ -19,12 +21,11 @@ class Trainer:
         best_val_acc = 0
         for epoch in range(self.num_epochs):
             self.model.train()
-            features, labels = self.train_loader
-            features, labels = features.to(self.device), labels.to(self.device)
             self.optimizer.zero_grad()
-            output = self.model(features, self.adj_matrix)
-            train_loss = self.criterion(output, labels)
-            train_acc = accuracy_score(labels.cpu().numpy(), output.argmax(dim=1).cpu().numpy())
+            output = self.model(self.features, self.adj_matrix)
+            train_loss = self.criterion(output[self.train_mask], self.labels[self.train_mask])
+            train_acc = accuracy_score(self.labels[self.train_mask].cpu().numpy(),
+                                       output[self.train_mask].argmax(dim=1).cpu().numpy())
             train_loss.backward()
             self.optimizer.step()
             print(f'Epoch: {epoch + 1:03d}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}')
@@ -40,26 +41,26 @@ class Trainer:
     def val(self):
         self.model.eval()
         with torch.no_grad():
-            features, labels = self.val_loader
-            features, labels = features.to(self.device), labels.to(self.device)
-            output = self.model(features, self.adj_matrix)
-            loss = self.criterion(labels.cpu().numpy(), output.argmax(dim=1).cpu().numpy())
-            acc = accuracy_score(labels.numpy(), output.argmax(dim=1).numpy())
+            output = self.model(self.features, self.adj_matrix)
+            loss = self.criterion(output[self.val_mask], self.labels[self.val_mask])
+            acc = accuracy_score(self.labels[self.val_mask].cpu().numpy(),
+                                 output[self.val_mask].argmax(dim=1).cpu().numpy())
         return loss, acc
 
 
 class Tester:
-    def __init__(self, args, model, test_loader, adj_matrix):
+    def __init__(self, args, model, features, labels, adj_matrix, test_mask):
         self.model = model.to(args.device)
         self.device = args.device
-        self.test_loader = test_loader
-        self.adj_matrix = adj_matrix
+        self.features = features.to(self.device)
+        self.labels = labels.to(self.device)
+        self.adj_matrix = adj_matrix.to(self.device)
+        self.test_mask = test_mask
 
     def test(self):
         self.model.eval()
         with torch.no_grad():
-            features, labels = self.test_loader
-            features, labels = features.to(self.device), labels.to(self.device)
-            output = self.model(features, self.adj_matrix)
-            acc = accuracy_score(labels.cpu().numpy(), output.argmax(dim=1).cpu().numpy())
+            output = self.model(self.features, self.adj_matrix)
+            acc = accuracy_score(self.labels[self.test_mask].cpu().numpy(),
+                                 output[self.test_mask].argmax(dim=1).cpu().numpy())
         print(f'Test Acc: {acc:.4f}')
