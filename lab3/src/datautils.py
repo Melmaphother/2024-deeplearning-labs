@@ -2,6 +2,7 @@ from dgl.data import (
     CoraGraphDataset,
     CiteseerGraphDataset,
 )
+
 import numpy as np
 import torch
 from dgl import AddSelfLoop

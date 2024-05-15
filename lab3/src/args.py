@@ -8,7 +8,7 @@ parser.add_argument('--num_epochs', type=int, default=200)
 parser.add_argument('--no_cuda', action='store_true', default=False)
 parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--weight_decay', type=float, default=5e-4)
-parser.add_argument('--patience', type=int, default=10)
+parser.add_argument('--patience', type=int, default=20)
 
 args = parser.parse_args()
 args.no_cuda = True

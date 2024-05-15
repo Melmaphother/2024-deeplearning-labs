@@ -41,7 +41,7 @@ class Trainer:
                     os.makedirs('../model')
                 torch.save(self.model.state_dict(), '../model/best_model.pkl')
             else:
-                counter = 1
+                counter += 1
 
             if counter == self.patience:
                 print(f'Early stopping at epoch: {epoch + 1}')
